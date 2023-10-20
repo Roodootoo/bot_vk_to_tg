@@ -39,6 +39,7 @@ class Settings(_Settings):
     CHANNEL = config.get('Telegram', 'CHANNEL')
     INCLUDE_LINK = config.getboolean('Settings', 'INCLUDE_LINK')
     PREVIEW_LINK = config.getboolean('Settings', 'PREVIEW_LINK')
+    REPOSTS = config.getboolean('Settings', 'REPOSTS')
 
     #: SecretStr: secret x-token for authority.
     X_API_TOKEN: SecretStr
