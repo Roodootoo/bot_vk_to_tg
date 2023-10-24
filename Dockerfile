@@ -1,18 +1,18 @@
 FROM python:3.10-alpine
 
-    COPY ./requirements.txt /src/requirements.txt
-    RUN pip3 install --no-cache-dir --upgrade -r /src/requirements.txt
+# Установка переменных окружения
+ENV PYTHONUNBUFFERED 1
 
-    COPY . /src
-    COPY ./logistic/ /src/logistic/
-    COPY ./stocks_products/ /src/stocks_products/
+# Копируем файлы в контейнер
+COPY ./requirements.txt /src/requirements.txt
+COPY ./app /scr/app
+COPY . /src
 
-    RUN python src/manage.py makemigrations
-    RUN python src/manage.py migrate
+# Устанавливаем зависимости
+RUN pip3 install --no-cache-dir --upgrade -r /src/requirements.txt
 
-    EXPOSE 6060
+# Установка рабочей директории внутри контейнера
+WORKDIR src
 
-    WORKDIR src
 
-
-    CMD ["python", "manage.py", "runserver", "0.0.0.0:6060"]
+CMD ["python", "main.py"]

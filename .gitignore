@@ -1,2 +1,4 @@
 .env
-VK_posts.log
+app.log
+/.pytest_cache/
+/tests/
