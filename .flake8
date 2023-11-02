@@ -1,0 +1,4 @@
+[flake8]
+exclude = env,venv,.env,.venv,__init__.py
+max-line-length = 120
+ignore = E123,E133,E226,F405

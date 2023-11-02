@@ -1,0 +1,9 @@
+version: '3.10'
+
+services:
+  bot:
+    build: .
+    container_name: bot_vk_to_tg
+    restart: always
+    env_file:
+      - .env

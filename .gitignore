@@ -1,4 +1,4 @@
 .env
 app.log
 /.pytest_cache/
-/tests/
+/tests/*

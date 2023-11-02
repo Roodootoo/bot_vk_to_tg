@@ -52,10 +52,10 @@ class TelegramBot:
             self.logger.error(f'Ошибка при отправке медиа, общее количество = {len(image_urls)}')
 
     def get_image_url(self, image):
-        # Выбираем наибольший размер изображения
+        # Выбор наибольшего размера изображения
         max_size_image = max(image["sizes"], key=lambda size: size["type"])
 
-        # Получаем URL выбранного изображения
+        # Получение URL выбранного изображения
         image_url = max_size_image["url"]
 
         return image_url

@@ -11,16 +11,6 @@ class PostProcessor:
         self.logger = logger
 
     def process_post(self, post, last_id):
-        # Пропуск перепостов
-        if not self.reposts and 'copy_history' in post:
-            self.logger.info('Пропущен пост, так как это перепост')
-            return None, []
-
-        # Пропуск уже опубликованных
-        if int(post['id']) <= int(last_id):
-            self.logger.info(f"Пропущен пост, так как его ID {post['id']} меньше или равен последнему ID {last_id}")
-            return None, []
-
         text = post['text']
         copy_history_text = ''
         images = []
@@ -35,7 +25,7 @@ class PostProcessor:
                     images.append(image)
                 elif attach['type'] == 'video' and not have_video:
                     video = attach['video']
-                    links.append('# Для просмотра видео, поджалуйста, перейдите по ссылке ниже ')
+                    links.insert(0, '# Для просмотра видео, поджалуйста, перейдите по ссылке ')
                     have_video = True
                     if 'player' in video:
                         links.append(video['player'])
@@ -45,10 +35,6 @@ class PostProcessor:
                             links.append(value['url'])
 
         post_url = f"https://vk.com/{self.vk_api.domain_vk}?w=wall{str(post['owner_id'])}_{str(post['id'])}"
-
-        # Добавление ссылок, если надо
-        if self.include_link:
-            links.insert(0, '\n' + post_url + '\n')
 
         # Проверка, есть ли репост другой записи
         if 'copy_history' in post:
@@ -82,6 +68,10 @@ class PostProcessor:
                         for (key, value) in attach.items():
                             if key != 'type' and 'url' in value:
                                 links.append(value['url'])
+
+        # Добавление ссылок, если надо
+        if self.include_link:
+            links.append('\n ВК: ' + post_url + '\n')
 
         # Сборка всего текста
         text = '\n'.join([text] + [copy_history_text] + links)
