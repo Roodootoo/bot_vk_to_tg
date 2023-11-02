@@ -1,6 +1,6 @@
 import os
 import sys
-import configparser
+from decouple import config
 from time import sleep
 import logging
 
@@ -17,17 +17,15 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
 # Считываем переменных окружения
-config_path = os.path.join(sys.path[0], '.env')
-config = configparser.ConfigParser()
-config.read(config_path)
-DOMAIN_VK = config.get('VK', 'DOMAIN')
-COUNT_VK = config.get('VK', 'COUNT')
-VK_TOKEN = config.get('VK', 'TOKEN', fallback=None)
-BOT_TOKEN = config.get('Telegram', 'BOT_TOKEN')
-CHANNEL = config.get('Telegram', 'CHANNEL')
-INCLUDE_LINK = config.getboolean('Settings', 'INCLUDE_LINK')
-PREVIEW_LINK = config.getboolean('Settings', 'PREVIEW_LINK')
-REPOSTS = config.getboolean('Settings', 'REPOSTS')
+DOMAIN_VK = config('DOMAIN', default="")
+COUNT_VK = config('COUNT', default=10)
+VK_TOKEN = config('TOKEN', default="")
+BOT_TOKEN = config('BOT_TOKEN', default="")
+CHANNEL = config('CHANNEL', default="")
+INCLUDE_LINK = config('INCLUDE_LINK', default=True, cast=bool)
+PREVIEW_LINK = config('PREVIEW_LINK', default=False, cast=bool)
+REPOSTS = config('REPOSTS', default=True, cast=bool)
+
 
 # Проверка обязательных переменных окружения
 if not VK_TOKEN or not BOT_TOKEN or not CHANNEL:
@@ -44,22 +42,44 @@ if __name__ == '__main__':
         # Получение данных из ВК
         vk_data = vk_api.get_data(COUNT_VK)
         vk_data = reversed(vk_data['items'])
+        logger.info("Делаю проверку...")
+        last_id = config('LAST_ID', default=0)
 
         # Обработка и отправка постов в Telegram
         for post in vk_data:
-            text, images = post_processor.process_post(post, config.get('Settings', 'LAST_ID'))
-            if not text:
+            # Пропуск уже опубликованных
+            if int(post['id']) <= int(last_id):
                 continue
 
-            telegram_bot.send_text_message(text, PREVIEW_LINK)
+            # Пропуск перепостов
+            if not REPOSTS and 'copy_history' in post:
+                logger.info(f"Пропущен пост {post['id']}, так как перепост отключен")
+                continue
+
+            logger.info(f"Отправка поста {post['id']}")
+
+            text, images = post_processor.process_post(post, last_id)
+
+            if text:
+                telegram_bot.send_text_message(text, PREVIEW_LINK)
+
             if images:
                 telegram_bot.send_image_messages(images)
 
             # Запись отправленного id в файл
-            config.set('Settings', 'LAST_ID', str(post['id']))
-            last_id = str(post['id'])
-            with open(config_path, "w") as config_file:
-                config.write(config_file)
+            post_id = str(post['id'])
+            last_id = post_id
+
+            with open('.env', 'r') as env_file:
+                lines = env_file.readlines()
+
+            with open('.env', 'w') as env_file:
+                for line in lines:
+                    if line.startswith('LAST_ID'):
+                        env_file.write(f'LAST_ID = {post_id}\n')
+                        logger.info(f"Обновлён LAST_ID = {post_id}")
+                    else:
+                        env_file.write(line)
 
             # Ожидание на отправку следующего нового поста в Telegram
             sleep(60)
