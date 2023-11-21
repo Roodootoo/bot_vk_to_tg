@@ -25,6 +25,7 @@ CHANNEL = config('CHANNEL', default="")
 INCLUDE_LINK = config('INCLUDE_LINK', default=True, cast=bool)
 PREVIEW_LINK = config('PREVIEW_LINK', default=False, cast=bool)
 REPOSTS = config('REPOSTS', default=True, cast=bool)
+last_id = config('LAST_ID', default=0)
 
 
 # Проверка обязательных переменных окружения
@@ -43,12 +44,12 @@ if __name__ == '__main__':
         vk_data = vk_api.get_data(COUNT_VK)
         vk_data = reversed(vk_data['items'])
         logger.info("Делаю проверку...")
-        last_id = config('LAST_ID', default=0)
 
         # Обработка и отправка постов в Telegram
         for post in vk_data:
             # Пропуск уже опубликованных
             if int(post['id']) <= int(last_id):
+                logger.info(f"Пост уже опубликован  {post['id']}, LAST_ID = {last_id}")
                 continue
 
             # Пропуск перепостов
@@ -76,8 +77,8 @@ if __name__ == '__main__':
             with open('.env', 'w') as env_file:
                 for line in lines:
                     if line.startswith('LAST_ID'):
-                        env_file.write(f'LAST_ID = {post_id}\n')
-                        logger.info(f"Обновлён LAST_ID = {post_id}")
+                        env_file.write(f'LAST_ID = {last_id}\n')
+                        logger.info(f"Обновлён LAST_ID = {last_id}")
                     else:
                         env_file.write(line)
 
