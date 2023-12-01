@@ -11,10 +11,11 @@ from app.post_processor import PostProcessor
 # Настройка логгера
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-file_handler = logging.FileHandler('app.log')
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+logger_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(logger_format)
+logger.addHandler(console_handler)
 
 # Считываем переменных окружения
 DOMAIN_VK = config('DOMAIN', default="")
@@ -43,13 +44,13 @@ if __name__ == '__main__':
         # Получение данных из ВК
         vk_data = vk_api.get_data(COUNT_VK)
         vk_data = reversed(vk_data['items'])
-        logger.info("Делаю проверку...")
+        logger.info("Делаю проверку ВК...")
 
         # Обработка и отправка постов в Telegram
         for post in vk_data:
             # Пропуск уже опубликованных
             if int(post['id']) <= int(last_id):
-                logger.info(f"Пост уже опубликован  {post['id']}, LAST_ID = {last_id}")
+                # logger.info(f"Пост уже опубликован  {post['id']}, LAST_ID = {last_id}")
                 continue
 
             # Пропуск перепостов
@@ -86,4 +87,6 @@ if __name__ == '__main__':
             sleep(60)
 
         # Ожидание на проверку следующего нового поста в ВК
+        logger.info("..Сплю")
         sleep(3600)
+
