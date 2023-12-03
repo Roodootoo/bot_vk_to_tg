@@ -1,3 +1,4 @@
+import os
 import sys
 from decouple import config
 from get_docker_secret import get_docker_secret
@@ -26,16 +27,29 @@ CHANNEL = config('CHANNEL', default="")
 INCLUDE_LINK = config('INCLUDE_LINK', default=True, cast=bool)
 PREVIEW_LINK = config('PREVIEW_LINK', default=False, cast=bool)
 REPOSTS = config('REPOSTS', default=True, cast=bool)
+WAIT_TIME = int(config('WAIT_TIME', default=3600))
 last_id = config('LAST_ID', default=0)
 
 
 # Проверка обязательных переменных окружения
 if not VK_TOKEN or not BOT_TOKEN or not CHANNEL:
-    logger.critical("Одна или несколько обязательных переменных окружения не установлены!")
-    sys.exit(1)
+    try:
+        with open("token_vk", 'r') as token_vk:
+            VK_TOKEN = token_vk.read().rstrip('\n')
+    except IOError as e:
+        logger.critical("Одна или несколько обязательных переменных окружения не установлены!")
+        sys.exit(1)
+
+    try:
+        with open("token_tg", 'r') as token_tg:
+            BOT_TOKEN = token_tg.read().rstrip('\n')
+    except IOError as e:
+        logger.critical("Одна или несколько обязательных переменных окружения не установлены!")
+        sys.exit(1)
 
 
 if __name__ == '__main__':
+
     vk_api = VkAPI(VK_TOKEN, DOMAIN_VK, logger)
     telegram_bot = TelegramBot(BOT_TOKEN, CHANNEL, logger)
     post_processor = PostProcessor(telegram_bot, vk_api, INCLUDE_LINK, PREVIEW_LINK, REPOSTS, logger)
@@ -88,6 +102,6 @@ if __name__ == '__main__':
             sleep(60)
 
         # Ожидание на проверку следующего нового поста в ВК
-        logger.info("..Сплю 1 час")
-        sleep(3600)
+        logger.info("..Сплю " + str(WAIT_TIME) + " секунд")
+        sleep(WAIT_TIME)
 

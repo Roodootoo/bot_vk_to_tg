@@ -19,9 +19,10 @@
 Для успешной настройки и запуска бота вам потребуется:
 
 - Python 3.10
-- Docker
+- Пакеты Python, указанные в `requirements.txt`
 - [Сервисный ключ доступа приложения ВК](https://vk.com/apps?act=manage)
 - [Токен вашего tg bot](https://t.me/BotFather), подключенного администратором в вашем Telegram канале
+- Docker для запуска в контейнере
 
 
 ## Установка и настройка
@@ -68,6 +69,12 @@
 
     ```bash
     docker-compose up --build
+    ```
+
+7. Или файл python:
+
+    ```bash
+   python main.py 
     ```
 
 ## Пример ВК-поста с перепостом
