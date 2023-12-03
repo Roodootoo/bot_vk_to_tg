@@ -1,3 +1,4 @@
 vk_api
 pyTelegramBotAPI
 python-decouple
+get-docker-secret
