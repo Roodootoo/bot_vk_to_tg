@@ -1,3 +1,4 @@
 .env
-/.pytest_cache/
+.pytest_cache/
+settings.py
 /tests/

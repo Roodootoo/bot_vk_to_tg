@@ -1,18 +1,28 @@
-/.idea
-/.git
-/.gitignore
-/.vscode
-/coverage
-/.env
-/.aws
-/.ssh
-Dockerfile
-README.md
+# Git
+.git
+.gitignore
+
+# Docker
 docker-compose.yml
-/.DS_Store
-/venv
-/env
-/.env.example
-/.flake8
-/example.jpg
-/tests
+Dockerfile
+.docker
+.dockerignore
+
+# Virtual environment
+.venv/
+venv/
+
+# PyCharm
+.idea
+
+.pytest_cashe/
+.flake8
+
+.DS_Store/
+.env.example
+README.md
+example.jpg
+tests/
+settings.py
+token_vk
+token_tg

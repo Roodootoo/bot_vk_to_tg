@@ -5,5 +5,12 @@ services:
     build: .
     container_name: bot_vk_to_tg
     restart: always
-    env_file:
-      - .env
+    secrets:
+      - token_vk
+      - token_tg
+
+secrets:
+   token_vk:
+     file: token_vk
+   token_tg:
+     file: token_tg
