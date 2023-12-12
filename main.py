@@ -62,6 +62,7 @@ if __name__ == '__main__':
 
         # Обработка и отправка постов в Telegram
         for post in vk_data:
+            continue
             # Пропуск уже опубликованных
             if int(post['id']) <= int(last_id):
                 # logger.info(f"Пост уже опубликован  {post['id']}, LAST_ID = {last_id}")
