@@ -63,7 +63,12 @@ class PostProcessor:
                             have_video = True
 
                     elif attach['type'] == 'link' and self.include_link:
-                        links.append(attach['url'])
+                        try:
+                            link = attach['link']['url']
+                            links.append(link)
+                        except:
+                            pass
+
                     elif self.include_link:
                         for (key, value) in attach.items():
                             if key != 'type' and 'url' in value:
