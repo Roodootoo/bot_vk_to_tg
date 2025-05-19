@@ -10,7 +10,7 @@ class PostProcessor:
         self.reposts = reposts
         self.logger = logger
 
-    def process_post(self, post, last_id):
+    def process_post(self, post):
         text = post['text']
         copy_history_text = ''
         images = []
@@ -25,7 +25,7 @@ class PostProcessor:
                     images.append(image)
                 elif attach['type'] == 'video' and not have_video:
                     video = attach['video']
-                    links.insert(0, '# Для просмотра видео, поджалуйста, перейдите по ссылке ')
+                    links.insert(0, '# Для просмотра видео, пожалуйста, перейдите по ссылке ')
                     have_video = True
                     if 'player' in video:
                         links.append(video['player'])
@@ -36,7 +36,19 @@ class PostProcessor:
 
         post_url = f"https://vk.com/{self.vk_api.domain_vk}?w=wall{str(post['owner_id'])}_{str(post['id'])}"
 
-        # Проверка, есть ли репост другой записи
+        # Есть соавторство поста
+        if 'coowners' in post:
+            text = ""
+            copy_history_text = post['text']
+
+            # Добавление строки с савторами поста
+            owner_list = post['coowners']['list']
+            owner_names = [self.vk_api.get_owner_name_by_id(x['owner_id']) for x in owner_list]
+            owners = " & ".join(owner_names)
+            
+            copy_history_text = '\n \N{speech balloon} ' + owners + ':\n' + copy_history_text
+                    
+        # Это репост другой записи
         if 'copy_history' in post:
             copy_history = post['copy_history'][0]
             copy_history_text = copy_history['text']

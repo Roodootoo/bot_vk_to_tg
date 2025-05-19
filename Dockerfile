@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 
 # Копируем файлы в контейнер
 COPY ./requirements.txt /src/requirements.txt
-COPY ./app /scr/app
+COPY ./app /srс/app
 COPY . /src
 
 # Устанавливаем зависимости

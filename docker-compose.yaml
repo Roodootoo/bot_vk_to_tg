@@ -7,12 +7,19 @@ services:
       dockerfile: Dockerfile
     container_name: bot_vk_to_tg
     restart: always
+    env_file:
+      - .env
+    volumes:
+         - ./last_post:/src/last_post
     secrets:
       - token_vk
       - token_tg
+    environment:
+      - TOKEN_VK_FILE=/run/secrets/token_vk
+      - TOKEN_TELEGRAM_FILE=/run/secrets/token_tg
 
 secrets:
    token_vk:
-     file: token_vk
+     file: tokens/token_vk
    token_tg:
-     file: token_tg
+     file: tokens/token_tg

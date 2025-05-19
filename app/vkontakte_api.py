@@ -15,7 +15,7 @@ class VkAPI:
             'domain': self.domain_vk,
             'extended': 1,
             'count': count_vk,
-            'v': '5.131'
+            'v': '5.199'
         }
 
         response = requests.get(url, params=params).json()['response']
@@ -30,7 +30,7 @@ class VkAPI:
                 'access_token': self.vk_token,
                 'user_ids': owner_id,
                 'fields': 'first_name, last_name',
-                'v': '5.131'
+                'v': '5.199'
             }
             response = requests.get(url, params=params).json()['response'][0]
             owner_name = response['first_name'] + ' ' + response['last_name']
@@ -40,9 +40,9 @@ class VkAPI:
             params = {
                 'access_token': self.vk_token,
                 'group_id': (-1) * owner_id,
-                'v': '5.131'
+                'v': '5.199'
             }
-            owner_name = requests.get(url, params=params).json()['response'][0]['name']
+            owner_name = requests.get(url, params=params).json()['response']['groups'][0]['name']
 
         return owner_name
 
@@ -52,7 +52,7 @@ class VkAPI:
         params = {
             'access_token': self.vk_token,
             'videos': f'{video["owner_id"]}_{video["id"]}_{video["access_key"]}',
-            'v': '5.131',
+            'v': '5.199',
             'scope': ''
         }
 

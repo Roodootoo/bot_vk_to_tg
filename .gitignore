@@ -1,4 +1,11 @@
-.env
+/.env
 .pytest_cache/
-settings.py
+/settings.py
 /tests/
+/.idea
+/tokens
+/venv
+/tests
+/last_post
+.DS_Store
+__pycache__
