@@ -1,8 +1,33 @@
+from __future__ import annotations
+from typing import Tuple, List, Dict, Any, TYPE_CHECKING
 import re
+import logging
+
+if TYPE_CHECKING:
+    from app.vkontakte_api import VkAPI
+    from app.telegram_api import TelegramBot
 
 
 class PostProcessor:
-    def __init__(self, bot, vk_api, include_link, preview_link, reposts, logger):
+    def __init__(
+        self,
+        bot: TelegramBot,
+        vk_api: VkAPI,
+        include_link: bool,
+        preview_link: bool,
+        reposts: bool,
+        logger: logging.Logger
+    ):
+        """Инициализируем обработчик постов.
+
+        Args:
+            bot (TelegramBot): Telegram-бот.
+            vk_api (VkAPI): VK API клиент.
+            include_link (bool): Включать ли ссылки в посты.
+            preview_link (bool): Включать ли предпросмотр ссылок.
+            reposts (bool): Разрешать ли репосты.
+            logger (logging.Logger): Логгер для вывода сообщений.
+        """
         self.bot = bot
         self.vk_api = vk_api
         self.include_link = include_link
@@ -10,8 +35,16 @@ class PostProcessor:
         self.reposts = reposts
         self.logger = logger
 
-    def process_post(self, post):
-        text = post['text']
+    def process_post(self, post: Dict[str, Any]) -> Tuple[str, List[Dict]]:
+        """Обрабатываем пост ВК и возвращаем текст и изображения для отправки.
+
+        Args:
+            post (Dict[str, Any]): Данные поста из VK API.
+
+        Returns:
+            Tuple[str, List[Dict]]: Текст сообщения и список изображений.
+        """
+        text = post.get('text', '')
         copy_history_text = ''
         images = []
         links = []
@@ -21,20 +54,18 @@ class PostProcessor:
             have_video = False
             for attach in post['attachments']:
                 if attach['type'] == 'photo':
-                    image = attach['photo']
-                    images.append(image)
+                    images.append(attach['photo'])
                 elif attach['type'] == 'video' and not have_video:
-                    video = attach['video']
-                    links.insert(0, '# Для просмотра видео, пожалуйста, перейдите по ссылке ')
+                    links.insert(0, '# Для просмотра видео, пожалуйста, перейдите по ссылке ниже ')
                     have_video = True
-                    if 'player' in video:
+                    if 'player' in attach['video']:
                         links.append(video['player'])
                 else:
                     for (key, value) in attach.items():
                         if key != 'type' and 'url' in value:
                             links.append(value['url'])
 
-        post_url = f"https://vk.com/{self.vk_api.domain_vk}?w=wall{str(post['owner_id'])}_{str(post['id'])}"
+        post_url = f"https://vk.ru/{self.vk_api.domain_vk}?w=wall{str(post['owner_id'])}_{str(post['id'])}"
 
         # Есть соавторство поста
         if 'coowners' in post:
@@ -46,7 +77,7 @@ class PostProcessor:
             owner_names = [self.vk_api.get_owner_name_by_id(x['owner_id']) for x in owner_list]
             owners = " & ".join(owner_names)
             
-            copy_history_text = '\n \N{speech balloon} ' + owners + ':\n' + copy_history_text
+            copy_history_text = f"\n \N{speech balloon} {owners}:\n{copy_history_text}"
                     
         # Это репост другой записи
         if 'copy_history' in post:
@@ -56,15 +87,14 @@ class PostProcessor:
             # Добавление строки с автором репоста
             owner_id = int(copy_history['owner_id'])
             owner_name = self.vk_api.get_owner_name_by_id(owner_id)
-            copy_history_text = '\n \N{speech balloon} ' + owner_name + ':\n' + copy_history_text
+            copy_history_text = f"\n \N{speech balloon} {owner_name}:\n{copy_history_text}"
 
             # Проверка, есть ли аттачи у репоста
             if 'attachments' in copy_history:
                 have_video = False
                 for attach in copy_history['attachments']:
                     if attach['type'] == 'photo':
-                        image = attach['photo']
-                        images.append(image)
+                        images.append(attach['photo'])
                     elif attach['type'] == 'video' and have_video is False:
                         video = attach['video']
                         if 'player' in video:
@@ -74,31 +104,34 @@ class PostProcessor:
                             links.append('# Для просмотра видео, пожалуйста, перейдите по ссылке ниже ')
                             have_video = True
 
-                    elif attach['type'] == 'link' and self.include_link:
-                        try:
-                            link = attach['link']['url']
-                            links.append(link)
-                        except:
-                            pass
-
                     elif self.include_link:
-                        for (key, value) in attach.items():
-                            if key != 'type' and 'url' in value:
-                                links.append(value['url'])
+                        if attach['type'] == 'link':
+                            links.append(attach['link']['url'])
+                        else:
+                            for key, value in attach.items():
+                                if key != 'type' and 'url' in value:
+                                    links.append(value['url'])
 
         # Добавление ссылок, если надо
         if self.include_link:
-            links.append('\n ВК: ' + post_url + '\n')
+            links.append(f"\n ВК: {post_url} \n")
 
         # Сборка всего текста
         text = '\n'.join([text] + [copy_history_text] + links)
-        self.logger.info(post_url)
+        self.logger.info(f"Обработан пост: {post_url}")
 
         return text, images
 
     @staticmethod
-    def clean_text(text):
-        # Удаление вк-ссылок типа [id123| ] и [club213| ] для красоты текста
+    def clean_text(text: str) -> str:
+        """Очищаем текст от ВК-ссылок вида [id123| ] и [club123| ].
+
+        Args:
+            text (str): Исходный текст.
+
+        Returns:
+            str: Очищенный текст.
+        """
         str_id = "\[id"  # noqa: W605
         str_club = "\[club"  # noqa: W605
         str_end = "|"
@@ -116,16 +149,23 @@ class PostProcessor:
         return text
 
     @staticmethod
-    def split_text(text):
-        # Разделение текста на части, сколько Telegram может взять за один заход
+    def split_text(text: str) -> List[str]:
+        """Разделяем текст на части, соответствующие ограничениям Telegram.
+
+        Args:
+            text (str): Исходный текст.
+
+        Returns:
+            List[str]: Список частей текста.
+        """
         message_breakers = [':', '\n']
         max_message_length = 4096
 
-        if len(text) >= max_message_length:
-            last_index = max(
-                map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
-            good_part = text[:last_index]
-            bad_part = text[last_index + 1:]
-            return [good_part] + PostProcessor.split_text(bad_part)
-        else:
+        if len(text) <= max_message_length:
             return [text]
+        
+        last_index = max(
+            map(lambda separator: text.rfind(separator, 0, max_message_length), message_breakers))
+        good_part = text[:last_index]
+        bad_part = text[last_index + 1:]
+        return [good_part] + PostProcessor.split_text(bad_part)
